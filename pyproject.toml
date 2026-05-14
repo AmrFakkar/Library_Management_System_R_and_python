@@ -1,0 +1,11 @@
+[tool.coverage.run]
+source = ["app"]
+omit = ["*/tests/*", "*/alembic/*", "seed.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 70
+
+[tool.coverage.html]
+directory = "htmlcov"

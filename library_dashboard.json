@@ -1,0 +1,109 @@
+{
+  "title": "Library Management System",
+  "uid": "library-dashboard",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Total HTTP Requests",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(library_http_requests_total)",
+        "legendFormat": "Total Requests"
+      }],
+      "options": { "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" },
+        "thresholds": { "steps": [{"color": "green", "value": null}] } } }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Error Rate (5xx)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(library_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(library_http_requests_total[5m])) * 100",
+        "legendFormat": "Error Rate %"
+      }],
+      "options": { "colorMode": "background" },
+      "fieldConfig": { "defaults": {
+        "unit": "percent",
+        "color": { "mode": "thresholds" },
+        "thresholds": { "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 1},
+          {"color": "red", "value": 5}
+        ]}
+      }}
+    },
+    {
+      "id": 3, "type": "stat", "title": "Avg Response Time",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "avg(rate(library_http_request_duration_seconds_sum[5m]) / rate(library_http_request_duration_seconds_count[5m])) * 1000",
+        "legendFormat": "Avg Latency"
+      }],
+      "options": { "colorMode": "background" },
+      "fieldConfig": { "defaults": {
+        "unit": "ms",
+        "thresholds": { "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 200},
+          {"color": "red", "value": 1000}
+        ]}
+      }}
+    },
+    {
+      "id": 4, "type": "stat", "title": "Active Requests",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "library_active_requests", "legendFormat": "Active" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" },
+        "thresholds": { "steps": [{"color": "blue", "value": null}, {"color": "red", "value": 100}] }
+      }}
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Request Rate by Endpoint",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "sum by (endpoint, method) (rate(library_http_requests_total[1m]))",
+        "legendFormat": "{{method}} {{endpoint}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Response Time Percentiles",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(library_http_request_duration_seconds_bucket[5m]))) * 1000", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(library_http_request_duration_seconds_bucket[5m]))) * 1000", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(library_http_request_duration_seconds_bucket[5m]))) * 1000", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Cache Hit Rate",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "sum(rate(library_cache_hits_total[5m])) / (sum(rate(library_cache_hits_total[5m])) + sum(rate(library_cache_misses_total[5m]))) * 100",
+        "legendFormat": "Hit Rate %"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Auth Events",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum by (event_type, outcome) (rate(library_auth_events_total[5m]))", "legendFormat": "{{event_type}} {{outcome}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Error Rate by Status Code",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "targets": [{
+        "expr": "sum by (status_code) (rate(library_http_requests_total{status_code=~\"[45]..\"}[5m]))",
+        "legendFormat": "HTTP {{status_code}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    }
+  ]
+}
